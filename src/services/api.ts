@@ -142,7 +142,13 @@ export const api = {
   }> {
     try {
       const res = await fetch('/api/supabase/status');
-      const json = await res.json();
+      const text = await res.text();
+      let json: any;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new Error(`Server membalas non-JSON (${res.status}): ${text.slice(0, 120)}`);
+      }
       if (json.success && json.data) {
         return json.data;
       }
