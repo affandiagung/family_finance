@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import { createServer as createViteServer } from 'vite';
 import {
   getSupabaseClient,
   isSupabaseConfigured,
@@ -20,13 +19,15 @@ const PORT = 3000;
 
 app.use(express.json());
 
-// Database storage directory & file
-const DATA_DIR = path.join(process.cwd(), 'data');
+// Database storage directory & file. Vercel serverless functions can only
+// write safely to /tmp, while local development keeps the data folder here.
+const DATA_DIR = process.env.VERCEL ? path.join('/tmp', 'family-finance') : path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'family_finance_db.json');
 
-// Ensure data folder exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+function ensureDataDir() {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
 }
 
 interface DBStructure {
@@ -47,6 +48,7 @@ const DEFAULT_SETTINGS = {
 
 function loadDB(): DBStructure {
   try {
+    ensureDataDir();
     if (fs.existsSync(DB_FILE)) {
       const raw = fs.readFileSync(DB_FILE, 'utf-8');
       const data = JSON.parse(raw);
@@ -73,6 +75,7 @@ function loadDB(): DBStructure {
 
 function saveDB(data: DBStructure) {
   try {
+    ensureDataDir();
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
     console.error('Error writing DB:', err);
@@ -442,6 +445,7 @@ app.post('/api/settings', async (req, res) => {
 
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
