@@ -1,0 +1,9 @@
+{
+  "transactions": [],
+  "categories": [],
+  "settings": {
+    "budgetCycleStartDay": 25,
+    "monthlyExpenseBudget": 8500000,
+    "currency": "IDR"
+  }
+}

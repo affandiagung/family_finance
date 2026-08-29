@@ -1,0 +1,6 @@
+{
+  "name": "Catatan Keuangan Keluarga",
+  "description": "Aplikasi pencatatan pemasukan dan pengeluaran keluarga dengan siklus anggaran bulanan kustom, filter cerdas, dan dashboard analitik interaktif.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
