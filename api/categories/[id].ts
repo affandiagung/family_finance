@@ -1,4 +1,4 @@
-import { getSupabaseClient, handleError, json, methodNotAllowed, toSupabaseCategoryRow } from '../_lib/supabase';
+import { getSupabaseClient, handleError, json, methodNotAllowed } from '../_lib/supabase';
 
 export default async function handler(req: any, res: any) {
   const id = String(req.query?.id || '');
@@ -7,10 +7,15 @@ export default async function handler(req: any, res: any) {
     const client = await getSupabaseClient();
 
     if (req.method === 'PUT') {
-      const updatedCat = { id, ...req.body };
-      const { error } = await client.from('categories').update(toSupabaseCategoryRow(updatedCat)).eq('id', id);
+      const updates: Record<string, any> = {};
+      if (req.body?.name !== undefined) updates.name = req.body.name;
+      if (req.body?.type !== undefined) updates.type = req.body.type;
+      if (req.body?.icon !== undefined) updates.icon = req.body.icon;
+      if (req.body?.color !== undefined) updates.color = req.body.color;
+
+      const { error } = await client.from('categories').update(updates).eq('id', id);
       if (error) return json(res, 500, { success: false, error: `Gagal update ke Supabase: ${error.message}` });
-      return json(res, 200, { success: true, data: updatedCat });
+      return json(res, 200, { success: true, data: { id, ...req.body } });
     }
 
     if (req.method === 'DELETE') {

@@ -1,12 +1,25 @@
 import { Transaction, AppSettings, Category } from '../types';
 
+async function parseApiResponse(res: Response) {
+  const text = await res.text();
+  if (!text) {
+    throw new Error(`Server membalas kosong (${res.status})`);
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Server membalas non-JSON (${res.status}): ${text.slice(0, 120)}`);
+  }
+}
+
 export const api = {
   // ===================================
   // CATEGORIES API
   // ===================================
   async getCategories(): Promise<Category[]> {
     const res = await fetch('/api/categories');
-    const json = await res.json();
+    const json = await parseApiResponse(res);
     if (!res.ok || !json.success) {
       throw new Error(json.error || 'Gagal memuat kategori dari database');
     }
@@ -19,7 +32,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cat),
     });
-    const json = await res.json();
+    const json = await parseApiResponse(res);
     if (!res.ok || !json.success) {
       throw new Error(json.error || 'Gagal menyimpan kategori ke database');
     }
@@ -32,7 +45,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
     });
-    const json = await res.json();
+    const json = await parseApiResponse(res);
     if (!res.ok || !json.success) {
       throw new Error(json.error || 'Gagal memperbarui kategori di database');
     }
@@ -43,7 +56,7 @@ export const api = {
     const res = await fetch(`/api/categories/${id}`, {
       method: 'DELETE',
     });
-    const json = await res.json();
+    const json = await parseApiResponse(res);
     if (!res.ok || !json.success) {
       throw new Error(json.error || 'Gagal menghapus kategori di database');
     }
@@ -55,7 +68,7 @@ export const api = {
   // ===================================
   async getTransactions(): Promise<Transaction[]> {
     const res = await fetch('/api/transactions');
-    const json = await res.json();
+    const json = await parseApiResponse(res);
     if (!res.ok || !json.success) {
       throw new Error(json.error || 'Gagal mengambil data transaksi dari database');
     }
@@ -68,7 +81,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(tx),
     });
-    const json = await res.json();
+    const json = await parseApiResponse(res);
     if (!res.ok || !json.success) {
       throw new Error(json.error || 'Gagal menyimpan transaksi ke database');
     }
@@ -81,7 +94,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
     });
-    const json = await res.json();
+    const json = await parseApiResponse(res);
     if (!res.ok || !json.success) {
       throw new Error(json.error || 'Gagal mengubah transaksi di database');
     }
@@ -92,7 +105,7 @@ export const api = {
     const res = await fetch(`/api/transactions/${id}`, {
       method: 'DELETE',
     });
-    const json = await res.json();
+    const json = await parseApiResponse(res);
     if (!res.ok || !json.success) {
       throw new Error(json.error || 'Gagal menghapus transaksi dari database');
     }
@@ -104,7 +117,7 @@ export const api = {
   // ===================================
   async getSettings(): Promise<AppSettings> {
     const res = await fetch('/api/settings');
-    const json = await res.json();
+    const json = await parseApiResponse(res);
     if (!res.ok || !json.success) {
       throw new Error(json.error || 'Gagal memuat pengaturan dari database');
     }
@@ -117,7 +130,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings),
     });
-    const json = await res.json();
+    const json = await parseApiResponse(res);
     if (!res.ok || !json.success) {
       throw new Error(json.error || 'Gagal menyimpan pengaturan ke database');
     }
@@ -142,13 +155,7 @@ export const api = {
   }> {
     try {
       const res = await fetch('/api/supabase/status');
-      const text = await res.text();
-      let json: any;
-      try {
-        json = JSON.parse(text);
-      } catch {
-        throw new Error(`Server membalas non-JSON (${res.status}): ${text.slice(0, 120)}`);
-      }
+      const json = await parseApiResponse(res);
       if (json.success && json.data) {
         return json.data;
       }
@@ -169,7 +176,7 @@ export const api = {
   async getSupabaseSchema(): Promise<string> {
     try {
       const res = await fetch('/api/supabase/schema');
-      const json = await res.json();
+      const json = await parseApiResponse(res);
       if (json.success && json.sql) return json.sql;
     } catch (err) {
       console.warn('Failed to fetch schema:', err);
@@ -180,7 +187,7 @@ export const api = {
   async syncToSupabase(): Promise<{ success: boolean; message: string }> {
     try {
       const res = await fetch('/api/supabase/sync', { method: 'POST' });
-      const json = await res.json();
+      const json = await parseApiResponse(res);
       return {
         success: json.success,
         message: json.message || (json.success ? 'Berhasil disinkronkan' : 'Gagal sinkronisasi'),
